@@ -39,7 +39,6 @@ async fetchBusinessData() {
     }
   }
 
- ```bash
 
 async sendLeadData(payload) {
     try {
