@@ -17,7 +17,8 @@ This project includes a proxy server that needs to be started before using the a
    npm start
 
 ## How to Run on Symphony
-No need need node module and proxy folder. on "business-service-component.js"  uncomment following lines
+No need need node module and proxy folder. 
+In "business-service-component.js",  uncomment the following lines
 
  ```bash
 async fetchBusinessData() {
