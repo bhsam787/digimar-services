@@ -10,8 +10,10 @@ This project includes a proxy server that needs to be started before using the a
    cd proxy
 
 2. Install the dependencies:
+    ```bash
    npm install
-3. Start the proxy server:
+4. Start the proxy server:
+    ```bash
    npm start
 
 
