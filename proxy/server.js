@@ -37,7 +37,7 @@ app.post('/api/lead', async (req, res) => {
 
 app.get('/api/business', async (req, res) => {
   try {
-    const response = await fetch('https://dev.emerchantauthority.com/api/business', {
+    const response = await fetch('https://dev.emerchantauthority.com/api/business?itemsPerPage=100', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

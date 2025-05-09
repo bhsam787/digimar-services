@@ -434,7 +434,7 @@ class BusinessServiceForm extends HTMLElement {
    */
   async fetchBusinessData() {
     try {
-      // const response = await fetch('https://dev.emerchantauthority.com/api/business', {
+      // const response = await fetch('https://dev.emerchantauthority.com/api/business?itemsPerPage=100', {
       // Not using ths for now because it gives cors origin error. If this codes will be in the symfony app, then it will work.
 
       const response = await fetch('/api/business', {
