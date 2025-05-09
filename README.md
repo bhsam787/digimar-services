@@ -23,7 +23,7 @@ In "business-service-component.js",  uncomment the following lines
  ```bash
 async fetchBusinessData() {
     try {
-      // const response = await fetch('https://dev.emerchantauthority.com/api/business', {
+      // const response = await fetch('https://dev.emerchantauthority.com/api/business?itemsPerPage=100', {
       // Not using this for now because it gives CORS origin error. If this codes will be in the symfony app, then it will work.
 
       const response = await fetch('/api/business', {
