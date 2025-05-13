@@ -205,7 +205,7 @@ class BusinessServiceForm extends HTMLElement {
       return Object.keys(currentData).some((key) => item[key] !== currentData[key]);
     });
 
-    return this.__businessData;
+    // return this.__businessData;
   }
 
   /**
@@ -472,6 +472,26 @@ class BusinessServiceForm extends HTMLElement {
     `;
   }
 
+  findItemsWithDuplicatePhones(data) {
+    const phoneCount = {};
+    const duplicates = [];
+
+    // First pass: Count occurrences of each phone number
+    for (const item of data) {
+      const phone = item.contactPhone;
+      phoneCount[phone] = (phoneCount[phone] || 0) + 1;
+    }
+
+    // Second pass: Collect items with duplicate phone numbers
+    for (const item of data) {
+      if (phoneCount[item.contactPhone] > 1) {
+        duplicates.push(item);
+      }
+    }
+
+    return duplicates;
+  }
+
   /**
    * Attaches global event listeners for all interactive elements
    * Uses event delegation for improved performance
@@ -498,14 +518,15 @@ class BusinessServiceForm extends HTMLElement {
         const cardWrapper = clickedItem.closest('.service-card');
         const formContainer = cardWrapper.querySelector('.form-container');
         const businessCard = clickedItem.closest('.business-card');
+        const isSavedButtonExist = businessCard.querySelector('.save-btn.saved-btn');
         const previousBusinessCard = businessCard.previousElementSibling;
         const nextBusinessCard = businessCard.nextElementSibling;
 
         this.removeBusiness(clickedItem);
-        const collectedData = this.removeInformation(cardWrapper, businessCard);
+        !isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
 
         // Update UI based on remaining data
-        if (collectedData?.length === 0) {
+        if (this.__businessData.length === 0) {
           this.removeSubmitBtnWrapper();
           this.retrieveSaveBtn();
         }
@@ -560,15 +581,41 @@ class BusinessServiceForm extends HTMLElement {
 
         // Submit data if available
         if (this.__businessData.length > 0) {
-          this.sendLeadData(this.__businessData).then((result) => {
-            // Reset modal classes
-            modalContainer.className = '';
-            modalContainer.classList.add(buttonId);
-            modalWrapper.classList.add('modal-active');
+          clickedItem.disabled = true;
+          clickedItem.innerHTML = `<span class="spinner"></span>`;
+          const isExistDuplicatePhoneNumber = this.findItemsWithDuplicatePhones(this.__businessData);
+          if (isExistDuplicatePhoneNumber.length > 0) {
+            console.log(isExistDuplicatePhoneNumber, 'isExistDuplicatePhoneNumber');
+            setTimeout(() => {
+              clickedItem.disabled = false;
+              clickedItem.innerHTML = 'SUBMIT';
+              isExistDuplicatePhoneNumber.forEach((item) => {
+                const serviceCard = document.querySelector(`.service-card[data-id="${item.businessId}"]`);
+                const errorMessageElem = serviceCard.querySelector('#contactPhone + .error-message');
+                if (errorMessageElem) errorMessageElem.innerText = 'Duplicate phone number found';
+              });
+            }, 300);
+            return;
+          }
+          this.sendLeadData(this.__businessData)
+            .then((result) => {
+              //Reset modal classes
+              modalContainer.className = '';
+              modalContainer.classList.add(buttonId);
+              modalWrapper.classList.add('modal-active');
+              // Show success or error modal based on result
+              modalBody.innerHTML = result?.success ? this.successModalShow() : this.errorModalShow(result.error);
 
-            // Show success or error modal based on result
-            modalBody.innerHTML = result?.success ? this.successModalShow() : this.errorModalShow(result.error);
-          });
+              // Simulated delay or async task
+              setTimeout(() => {
+                clickedItem.disabled = false;
+                clickedItem.innerHTML = 'SUBMIT';
+              }, 1200);
+            })
+            .catch((err) => {
+              clickedItem.disabled = false;
+              clickedItem.innerHTML = 'SUBMIT';
+            });
         }
       }
 
@@ -594,7 +641,6 @@ class BusinessServiceForm extends HTMLElement {
     const saveBtn = card.querySelector('.save-btn');
     const addBtn = card.querySelector('.add-business-entry-btn');
 
-    console.log('agaian dealing with input');
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     const validatePhone = (phone) => {
@@ -676,9 +722,9 @@ class BusinessServiceForm extends HTMLElement {
    * @param {string} jsonString - JSON response string
    * @returns {Object} Formatted error messages by field
    */
-  extractValidationErrors(jsonString) {
+  extractValidationErrors(json) {
     const result = {};
-    const parsed = JSON.parse(jsonString);
+    const parsed = typeof json === 'string' ? JSON.parse(json) : json;
 
     for (const index in parsed.errors) {
       const fields = parsed.errors[index];
@@ -713,8 +759,11 @@ class BusinessServiceForm extends HTMLElement {
 
       const responseData = await response.json();
 
+      console.log('response', responseData);
+
       // Handle error response
       if (!response.ok) {
+        console.log('enter', this.extractValidationErrors(responseData));
         return {
           success: false,
           status: response.status,

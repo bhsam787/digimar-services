@@ -323,6 +323,7 @@ body {
 .service-wrapper .save-btn:not(.saved-btn) + .add-business-entry-btn {
   opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .service-wrapper .save-btn.saved-btn .save-btn-text {
@@ -381,6 +382,14 @@ body {
   border-radius: 8px;
   padding: 7px 0;
   cursor: pointer;
+}
+
+.service-wrapper .submit-wrapper .submit-btn[disabled] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 43px;
+  pointer-events: none;
 }
 
 #modal-container {
@@ -479,6 +488,7 @@ body {
   border: 0;
   border-radius: 8px;
   padding: 7px 0;
+  cursor: pointer;
 }
 
 #modal-container .modal-background .modal .modal-svg {
@@ -529,6 +539,15 @@ body {
   padding-bottom: 0;
 }
 
+.spinner {
+  border: 3px solid #5e6278;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
 
 @media screen and (max-width: 767px) {
   .service-wrapper .service-card-container {
@@ -548,6 +567,15 @@ body {
 
   .service-wrapper .submit-wrapper {
     padding: 16px;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 
