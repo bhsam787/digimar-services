@@ -533,6 +533,7 @@ class BusinessServiceForm extends HTMLElement {
         const saveBtnTextElem = clickedItem.querySelector('.save-btn-text');
         const wrapper = clickedItem.closest('.service-card');
         const businessCard = clickedItem.closest('.business-card');
+        const allInputFields = businessCard.querySelectorAll('input');
 
         // Update button state
         clickedItem.classList.add('saved-btn');
@@ -543,6 +544,9 @@ class BusinessServiceForm extends HTMLElement {
         if (collectedData.length > 0) {
           this.renderSubmitBtnElement();
           this.attachIntersectionObserver();
+          allInputFields.forEach((inputElem) => {
+            inputElem.disabled = true;
+          });
         }
       }
 
@@ -590,18 +594,9 @@ class BusinessServiceForm extends HTMLElement {
     const saveBtn = card.querySelector('.save-btn');
     const addBtn = card.querySelector('.add-business-entry-btn');
 
-    /**
-     * Validates email format
-     * @param {string} email - Email to validate
-     * @returns {boolean} True if valid
-     */
+    console.log('agaian dealing with input');
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    /**
-     * Validates phone number using libphonenumber library
-     * @param {string} phone - Phone number to validate
-     * @returns {boolean} True if valid
-     */
     const validatePhone = (phone) => {
       const { parsePhoneNumberFromString } = window.libphonenumber;
       try {
@@ -612,73 +607,68 @@ class BusinessServiceForm extends HTMLElement {
       }
     };
 
-    /**
-     * Displays error message for a field
-     * @param {HTMLElement} field - Field with error
-     * @param {string} message - Error message to display
-     */
     const showError = (field, message) => {
       const errorDiv = field.parentElement.querySelector('.error-message');
-      errorDiv.textContent = message;
-      errorDiv.style.color = 'red';
+      if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.color = 'red';
+      }
     };
 
-    /**
-     * Clears error message for a field
-     * @param {HTMLElement} field - Field to clear error from
-     */
     const clearError = (field) => {
-      field.parentElement.querySelector('.error-message').textContent = '';
+      const errorDiv = field.parentElement.querySelector('.error-message');
+      if (errorDiv) errorDiv.textContent = '';
     };
 
-    /**
-     * Validates a single field based on rules
-     * @param {HTMLElement} field - Field to validate
-     * @param {boolean} showErrorOnlyForThis - Whether to show error messages
-     * @returns {boolean} True if valid
-     */
-    const validateField = (field, showErrorOnlyForThis = false) => {
+    const getFieldValue = (id) => card.querySelector(`#${id}`)?.value.trim() || '';
+
+    const businessName = getFieldValue('businessName');
+    const contactName = getFieldValue('contactName');
+    const contactEmail = getFieldValue('contactEmail');
+    const contactPhone = getFieldValue('contactPhone');
+
+    const nameRequirementMet = businessName.length >= 3 || contactName.length > 0;
+    const contactRequirementMet = (contactEmail && validateEmail(contactEmail)) || (contactPhone && validatePhone(contactPhone));
+
+    // Clear group-related errors
+    clearError(card.querySelector('#businessName'));
+    clearError(card.querySelector('#contactName'));
+    clearError(card.querySelector('#contactEmail'));
+    clearError(card.querySelector('#contactPhone'));
+
+    // Show group-level errors if needed
+    if (!nameRequirementMet) {
+      const fallback = card.querySelector('#businessName') || card.querySelector('#contactName');
+      showError(fallback, 'Business or contact name is required');
+    }
+
+    if (!contactRequirementMet) {
+      const fallback = card.querySelector('#contactPhone') || card.querySelector('#contactEmail');
+      showError(fallback, 'Email or phone number is required');
+    }
+
+    // Individual validations (only apply if field has value)
+    fields.forEach((field) => {
       const value = field.value.trim();
-
-      // Clear previous error if validating this specific field
-      if (showErrorOnlyForThis) clearError(field);
-
-      // Required field validation
-      if (!value) {
-        if (showErrorOnlyForThis) showError(field, 'This field is required');
-        return false;
+      if (value) {
+        if (field.id === 'businessName' && value.length < 3) {
+          showError(field, 'Business name must be at least 3 characters');
+        }
+        if (field.id === 'contactEmail' && !validateEmail(value)) {
+          showError(field, 'Enter a valid email address');
+        }
+        if (field.id === 'contactPhone' && !validatePhone(value)) {
+          showError(field, 'Enter a valid phone number');
+        }
+      } else {
+        clearError(field); // no value, no error shown unless it's in a required group
       }
+    });
 
-      // Business name length validation
-      if (field.id === 'businessName' && value.length < 3) {
-        if (showErrorOnlyForThis) showError(field, 'Business name must be at least 3 characters');
-        return false;
-      }
+    const formValid = nameRequirementMet && contactRequirementMet;
 
-      // Email format validation
-      if (field.id === 'contactEmail' && !validateEmail(value)) {
-        if (showErrorOnlyForThis) showError(field, 'Enter a valid email address');
-        return false;
-      }
-
-      // Phone number validation
-      if (field.id === 'contactPhone' && !validatePhone(value)) {
-        if (showErrorOnlyForThis) showError(field, 'Enter a valid phone number');
-        return false;
-      }
-
-      return true;
-    };
-
-    // Validate current input with error display
-    validateField(input, true);
-
-    // Check if all fields are valid
-    const allValid = Array.from(fields).every((field) => validateField(field, false));
-
-    // Enable/disable buttons based on validation
-    saveBtn.disabled = !allValid;
-    addBtn.disabled = !allValid;
+    saveBtn.disabled = !formValid;
+    addBtn.disabled = !formValid;
   }
 
   /**
