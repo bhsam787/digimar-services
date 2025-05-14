@@ -97,7 +97,7 @@ class BusinessServiceForm extends HTMLElement {
             <span class="save-btn-icon">${this.icons.saved}</span>
             <span class="save-btn-text">SAVE</span>
           </button>
-          <button class="add-business-entry-btn" disabled>
+          <button class="add-business-entry-btn">
             <span class="add-business-entry-icon">${this.icons.plus}</span>
             <span class="add-business-entry-text">ADD ANOTHER BUSINESS</span>
           </button>
@@ -526,8 +526,8 @@ class BusinessServiceForm extends HTMLElement {
         const nextBusinessCard = businessCard.nextElementSibling;
 
         this.removeBusiness(clickedItem);
-        !isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
-        //this.removeInformation(cardWrapper, businessCard);
+        //!isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
+        this.removeInformation(cardWrapper, businessCard);
 
         // Update UI based on remaining data
         if (this.__businessData.length === 0) {
@@ -547,13 +547,9 @@ class BusinessServiceForm extends HTMLElement {
 
       // Handle "Add Another Business" button click
       else if (target.closest('.add-business-entry-btn')) {
-        const buttonWrapper = target.closest('.business-card-btn-wrapper');
-        const savedBtn = buttonWrapper.querySelector('.save-btn');
-        if (savedBtn.classList.contains('saved-btn')) {
-          const clickedItem = target.closest('.add-business-entry-btn');
-          clickedItem.classList.add('hidden-element');
-          this.addBusiness(clickedItem);
-        }
+        const clickedItem = target.closest('.add-business-entry-btn');
+        clickedItem.classList.add('hidden-element');
+        this.addBusiness(clickedItem);
       }
 
       // Handle "Save" button click (only if not already saved)
@@ -577,6 +573,8 @@ class BusinessServiceForm extends HTMLElement {
             inputElem.disabled = true;
           });
         }
+
+        console.log('storeInformation', this.__businessData);
       }
 
       // Handle "Submit" button click
@@ -600,7 +598,9 @@ class BusinessServiceForm extends HTMLElement {
               isExistDuplicatePhoneNumber.forEach((item) => {
                 const serviceCard = document.querySelector(`.service-card[data-id="${item.businessId}"]`);
                 const contactPhoneInput = serviceCard.querySelectorAll('#contactPhone');
-                const isExistElement = [...contactPhoneInput].filter((el) => el.value !== '' && el.value === item.contactPhone);
+                const isExistElement = [...contactPhoneInput].filter(
+                  (el) => el.value !== '' && el.value.trim() === item.contactPhone.trim()
+                );
                 console.log(isExistElement, 'isExistElement');
                 if (isExistElement.length > 0) {
                   isExistElement.forEach((element) => {
@@ -699,6 +699,7 @@ class BusinessServiceForm extends HTMLElement {
    * Enables/disables buttons based on validation results
    * @param {HTMLElement} input - The input element being validated
    */
+
   validateForm(input) {
     const card = input.closest('.business-card');
     const fields = card.querySelectorAll('input');
@@ -708,14 +709,25 @@ class BusinessServiceForm extends HTMLElement {
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     const validatePhone = (phone) => {
-      const { parsePhoneNumberFromString } = window.libphonenumber;
-      try {
-        const parsed = parsePhoneNumberFromString(phone);
-        return parsed?.isValid() || false;
-      } catch {
-        return false;
-      }
+      const digits = phone.replace(/\D/g, '');
+      return digits.length === 10;
     };
+
+    const formatPhone = (input) => {
+      const digits = input.replace(/\D/g, '').substring(0, 10);
+      const part1 = digits.substring(0, 3);
+      const part2 = digits.substring(3, 6);
+      const part3 = digits.substring(6, 10);
+      if (digits.length > 6) return `${part1}-${part2}-${part3}`;
+      if (digits.length > 3) return `${part1}-${part2}`;
+      return part1;
+    };
+
+    // Auto-format phone input
+    const phoneField = card.querySelector('#contactPhone');
+    if (phoneField) {
+      phoneField.value = formatPhone(phoneField.value);
+    }
 
     const showError = (field, message) => {
       const errorDiv = field.parentElement.querySelector('.error-message');
@@ -768,15 +780,14 @@ class BusinessServiceForm extends HTMLElement {
           showError(field, 'Enter a valid email address');
         }
         if (field.id === 'contactPhone' && !validatePhone(value)) {
-          showError(field, 'Enter a valid phone number');
+          showError(field, 'Enter a valid phone number (e.g. 480-200-2999)');
         }
       } else {
-        clearError(field); // no value, no error shown unless it's in a required group
+        clearError(field);
       }
     });
 
     const formValid = nameRequirementMet && contactRequirementMet;
-
     saveBtn.disabled = !formValid;
     addBtn.disabled = !formValid;
   }
@@ -808,6 +819,10 @@ class BusinessServiceForm extends HTMLElement {
    * @returns {Promise<Object>} Response with success status and data/error
    */
   async sendLeadData(payload) {
+    const updatedData = payload.map((item) => ({
+      ...item,
+      contactPhone: item.contactPhone.startsWith('+1') ? item.contactPhone : `+1${item.contactPhone}`,
+    }));
     try {
       // const response = await fetch('https://dev.emerchantauthority.com/api/lead', {
       // Not using ths for now because it gives cors origin error. If this codes will be in the symfony app, then it will work.
@@ -818,12 +833,10 @@ class BusinessServiceForm extends HTMLElement {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(updatedData),
       });
 
       const responseData = await response.json();
-
-      console.log('response', responseData);
 
       // Handle error response
       if (!response.ok) {
