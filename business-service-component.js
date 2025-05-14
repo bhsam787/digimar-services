@@ -526,8 +526,8 @@ class BusinessServiceForm extends HTMLElement {
         const nextBusinessCard = businessCard.nextElementSibling;
 
         this.removeBusiness(clickedItem);
-        //!isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
-        this.removeInformation(cardWrapper, businessCard);
+        !isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
+        //this.removeInformation(cardWrapper, businessCard);
 
         // Update UI based on remaining data
         if (this.__businessData.length === 0) {
