@@ -476,15 +476,18 @@ class BusinessServiceForm extends HTMLElement {
     const phoneCount = {};
     const duplicates = [];
 
-    // First pass: Count occurrences of each phone number
+    // First pass: Count occurrences of each phone number (excluding empty strings)
     for (const item of data) {
       const phone = item.contactPhone;
-      phoneCount[phone] = (phoneCount[phone] || 0) + 1;
+      if (phone !== '') {
+        phoneCount[phone] = (phoneCount[phone] || 0) + 1;
+      }
     }
 
     // Second pass: Collect items with duplicate phone numbers
     for (const item of data) {
-      if (phoneCount[item.contactPhone] > 1) {
+      const phone = item.contactPhone;
+      if (phone !== '' && phoneCount[phone] > 1) {
         duplicates.push(item);
       }
     }
@@ -597,7 +600,7 @@ class BusinessServiceForm extends HTMLElement {
               isExistDuplicatePhoneNumber.forEach((item) => {
                 const serviceCard = document.querySelector(`.service-card[data-id="${item.businessId}"]`);
                 const contactPhoneInput = serviceCard.querySelectorAll('#contactPhone');
-                const isExistElement = [...contactPhoneInput].filter((el) => el.value === item.contactPhone);
+                const isExistElement = [...contactPhoneInput].filter((el) => el.value !== '' && el.value === item.contactPhone);
                 console.log(isExistElement, 'isExistElement');
                 if (isExistElement.length > 0) {
                   isExistElement.forEach((element) => {
