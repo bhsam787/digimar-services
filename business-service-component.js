@@ -166,18 +166,18 @@ class BusinessServiceForm extends HTMLElement {
     const businessId = Number(id);
 
     // Check for duplicates before adding
-    const isDuplicate = this.__businessData.some((item) => {
-      if (item.businessId !== businessId) return false;
-      return Object.keys(data).every((key) => item[key] === data[key]);
-    });
+    // const isDuplicate = this.__businessData.some((item) => {
+    //   if (item.businessId !== businessId) return false;
+    //   return Object.keys(data).every((key) => item[key] === data[key]);
+    // });
 
     // Add data if not a duplicate
-    if (!isDuplicate) {
-      this.__businessData.push({
-        businessId,
-        ...data,
-      });
-    }
+    //if (!isDuplicate) {
+    this.__businessData.push({
+      businessId,
+      ...data,
+    });
+    //}
 
     return this.__businessData;
   }
@@ -523,7 +523,8 @@ class BusinessServiceForm extends HTMLElement {
         const nextBusinessCard = businessCard.nextElementSibling;
 
         this.removeBusiness(clickedItem);
-        !isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
+        //!isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
+        this.removeInformation(cardWrapper, businessCard);
 
         // Update UI based on remaining data
         if (this.__businessData.length === 0) {
@@ -543,9 +544,13 @@ class BusinessServiceForm extends HTMLElement {
 
       // Handle "Add Another Business" button click
       else if (target.closest('.add-business-entry-btn')) {
-        const clickedItem = target.closest('.add-business-entry-btn');
-        clickedItem.classList.add('hidden-element');
-        this.addBusiness(clickedItem);
+        const buttonWrapper = target.closest('.business-card-btn-wrapper');
+        const savedBtn = buttonWrapper.querySelector('.save-btn');
+        if (savedBtn.classList.contains('saved-btn')) {
+          const clickedItem = target.closest('.add-business-entry-btn');
+          clickedItem.classList.add('hidden-element');
+          this.addBusiness(clickedItem);
+        }
       }
 
       // Handle "Save" button click (only if not already saved)
@@ -591,9 +596,39 @@ class BusinessServiceForm extends HTMLElement {
               clickedItem.innerHTML = 'SUBMIT';
               isExistDuplicatePhoneNumber.forEach((item) => {
                 const serviceCard = document.querySelector(`.service-card[data-id="${item.businessId}"]`);
-                const errorMessageElem = serviceCard.querySelector('#contactPhone + .error-message');
-                if (errorMessageElem) errorMessageElem.innerText = 'Duplicate phone number found';
+                const contactPhoneInput = serviceCard.querySelectorAll('#contactPhone');
+                const isExistElement = [...contactPhoneInput].filter((el) => el.value === item.contactPhone);
+                console.log(isExistElement, 'isExistElement');
+                if (isExistElement.length > 0) {
+                  isExistElement.forEach((element) => {
+                    const businessCard = element.closest('.business-card');
+                    const inputWrapper = businessCard.querySelector('.input-wrapper');
+                    const inputFields = inputWrapper.querySelectorAll('input');
+                    const errorMessageElem = element.nextElementSibling;
+                    const saveBtn = businessCard.querySelector('.save-btn');
+                    const btnTextElement = saveBtn.querySelector('.save-btn-text');
+
+                    if (errorMessageElem) errorMessageElem.innerText = 'Duplicate phone number found';
+
+                    inputFields.forEach((input) => {
+                      input.disabled = false;
+                    });
+
+                    if (saveBtn) {
+                      btnTextElement.textContent = 'SAVE';
+                      saveBtn.classList.remove('saved-btn');
+                      saveBtn.disabled = true;
+                      this.removeInformation(serviceCard, businessCard);
+                    }
+                  });
+                }
               });
+
+              console.log('businessData', this.__businessData);
+              if (this.__businessData.length === 0) {
+                this.removeSubmitBtnWrapper();
+                this.retrieveSaveBtn();
+              }
             }, 300);
             return;
           }
@@ -625,7 +660,33 @@ class BusinessServiceForm extends HTMLElement {
         const modalWrapper = modalContainer.closest('.modal-wrapper');
         modalContainer.classList.add('out');
         modalWrapper.classList.remove('modal-active');
-        this.resetDom();
+
+        const errorWrapper = modalContainer.querySelector('.errors-wrapper');
+        if (!errorWrapper) this.resetDom();
+        if (errorWrapper) {
+          console.log(this.__businessData, 'this.__businessData');
+          const businessCards = document.querySelectorAll('.business-card');
+          businessCards.forEach((card) => {
+            const mainCard = card.closest('.service-card');
+            const inputFields = card.querySelectorAll('input');
+            const saveBtn = card.querySelector('.save-btn');
+            const btnTextElement = saveBtn.querySelector('.save-btn-text');
+
+            inputFields.forEach((input) => (input.disabled = false));
+            if (saveBtn) {
+              btnTextElement.textContent = 'SAVE';
+              saveBtn.classList.remove('saved-btn');
+              saveBtn.disabled = true;
+              this.removeInformation(mainCard, card);
+            }
+          });
+
+          if (this.__businessData.length === 0) {
+            this.removeSubmitBtnWrapper();
+            this.retrieveSaveBtn();
+          }
+          console.log(this.__businessData, 'this.__businessData agaian');
+        }
       }
     });
   }

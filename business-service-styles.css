@@ -256,7 +256,6 @@ body {
   background-color: #fff;
   border: 0;
   padding: 0 0 0 8px;
-  cursor: pointer;
 }
 
 .service-wrapper .add-business-entry-btn.hidden-element {
@@ -299,6 +298,13 @@ body {
   border: 0;
   border-radius: 11px;
   color: #fff;
+}
+
+.service-wrapper .save-btn:not(.saved-btn) {
+  cursor: pointer;
+}
+
+.service-wrapper .save-btn.saved-btn + .add-business-entry-btn {
   cursor: pointer;
 }
 
@@ -322,8 +328,6 @@ body {
 
 .service-wrapper .save-btn:not(.saved-btn) + .add-business-entry-btn {
   opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
 }
 
 .service-wrapper .save-btn.saved-btn .save-btn-text {
