@@ -62,6 +62,14 @@ class BusinessServiceForm extends HTMLElement {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
   }
 
+  generateUniqueId() {
+    return (
+      Date.now().toString(36) + // timestamp
+      '-' +
+      Math.random().toString(36).substr(2, 5) // random part
+    );
+  }
+
   /**
    * Renders a new business form inside the specified container
    * Creates input fields for business information and attaches validation listeners
@@ -69,7 +77,7 @@ class BusinessServiceForm extends HTMLElement {
    */
   addBusinessForm(container) {
     const formHtml = `
-      <div class="business-card">
+      <div class="business-card" data-id="${this.generateUniqueId()}">
         <div class="remove-btn">
           <span class="remove-btn-icon">${this.icons.remove}</span>
           <span class="remove-btn-text">Remove</span>
@@ -144,9 +152,19 @@ class BusinessServiceForm extends HTMLElement {
       checkbox.addEventListener('change', () => {
         card.classList.toggle('active', checkbox.checked);
         if (!card.classList.contains('active')) {
+          const businessCards = card.querySelectorAll('.business-card');
+          businessCards.forEach((businessCard) => {
+            this.removeInformation(businessCard);
+          });
           setTimeout(() => {
             card.querySelector('.form-container').innerHTML = '';
             card.classList.remove('business-option-added');
+            if (this.__businessData.length === 0) {
+              this.removeSubmitBtnWrapper();
+              this.retrieveSaveBtn();
+            }
+
+            console.log(this.__businessData, 'uncheck');
           }, 400);
         }
       });
@@ -189,20 +207,26 @@ class BusinessServiceForm extends HTMLElement {
     });
 
     const businessId = Number(id);
+    const itemId = businessCard.dataset.id;
 
-    // Check for duplicates before adding
-    // const isDuplicate = this.__businessData.some((item) => {
-    //   if (item.businessId !== businessId) return false;
-    //   return Object.keys(data).every((key) => item[key] === data[key]);
-    // });
+    // Check if an item with the same dataset.id exists
+    const existingIndex = this.__businessData.findIndex((item) => item.id === itemId);
 
-    // Add data if not a duplicate
-    //if (!isDuplicate) {
-    this.__businessData.push({
+    const newEntry = {
+      id: itemId,
       businessId,
       ...data,
-    });
-    //}
+    };
+
+    if (existingIndex !== -1) {
+      // Update existing item
+      this.__businessData[existingIndex] = newEntry;
+    } else {
+      // Add new item
+      this.__businessData.push(newEntry);
+    }
+
+    console.log(this.__businessData, 'savingss');
 
     return this.__businessData;
   }
@@ -213,24 +237,12 @@ class BusinessServiceForm extends HTMLElement {
    * @param {HTMLElement} businessCard - The business card being removed
    * @returns {Array} Updated collection of business data
    */
-  removeInformation(wrapper, businessCard) {
-    const { id } = wrapper.dataset;
-    const inputs = businessCard.querySelectorAll('input');
-    const currentData = {
-      businessId: Number(id),
-    };
+  removeInformation(businessCard) {
+    const cardId = businessCard.dataset.id;
 
-    // Extract input values
-    inputs.forEach((input) => {
-      currentData[input.id] = input.value.trim();
-    });
+    this.__businessData = this.__businessData.filter((item) => item.id !== cardId);
 
-    // Filter out the matching entry
-    this.__businessData = this.__businessData.filter((item) => {
-      return Object.keys(currentData).some((key) => item[key] !== currentData[key]);
-    });
-
-    // return this.__businessData;
+    console.log(this.__businessData, 'remove data');
   }
 
   /**
@@ -295,6 +307,7 @@ class BusinessServiceForm extends HTMLElement {
     const serviceWrapper = this.querySelector('.service-wrapper');
     if (!this.querySelector('.submit-wrapper')) {
       serviceWrapper.appendChild(this.submitBtnWrapper());
+      this.attachIntersectionObserver();
     }
   }
 
@@ -438,15 +451,54 @@ class BusinessServiceForm extends HTMLElement {
    * Initializes the component
    * Fetches business data and sets up event listeners
    */
+  // async init() {
+  //   this.attachCheckBoxInputListener();
+
+  //   const container = this.querySelector('.service-card-container');
+  //   const businessData = await this.fetchBusinessData();
+
+  //   // Render service cards if data is available
+  //   if (businessData?.data?.length) {
+  //     const totalListItems = businessData.meta.totalCount;
+  //     container.innerHTML = businessData.data.map(this.createServiceCard).join('');
+  //   }
+
+  //   this.attachGlobalListeners();
+  //   this.attachCheckBoxInputListener();
+  // }
+
+  splitIntoColumnsByChunk(items, columnCount = 3) {
+    const total = items.length;
+    const baseSize = Math.floor(total / columnCount);
+    const remainder = total % columnCount;
+
+    const columns = [];
+    let start = 0;
+
+    for (let i = 0; i < columnCount; i++) {
+      const size = baseSize + (i < remainder ? 1 : 0); // Distribute remainder
+      const chunk = items.slice(start, start + size);
+      columns.push(chunk);
+      start += size;
+    }
+
+    return columns;
+  }
+
   async init() {
     this.attachCheckBoxInputListener();
 
     const container = this.querySelector('.service-card-container');
     const businessData = await this.fetchBusinessData();
 
-    // Render service cards if data is available
     if (businessData?.data?.length) {
-      container.innerHTML = businessData.data.map(this.createServiceCard).join('');
+      const items = businessData.data;
+      const columns = this.splitIntoColumnsByChunk(items, 3);
+
+      columns.forEach((columnItems, i) => {
+        const columnEl = this.querySelector(`#col-${i + 1}`);
+        columnEl.innerHTML = columnItems.map(this.createServiceCard).join('');
+      });
     }
 
     this.attachGlobalListeners();
@@ -549,15 +601,19 @@ class BusinessServiceForm extends HTMLElement {
         const isSavedButtonExist = businessCard.querySelector('.save-btn.saved-btn');
         const previousBusinessCard = businessCard.previousElementSibling;
         const nextBusinessCard = businessCard.nextElementSibling;
+        const submitBtn = document.querySelector('.submit-btn');
 
         this.removeBusiness(clickedItem);
-        !isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
-        //this.removeInformation(cardWrapper, businessCard);
+        //!isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
+        this.removeInformation(businessCard);
 
         // Update UI based on remaining data
         if (this.__businessData.length === 0) {
           this.removeSubmitBtnWrapper();
           this.retrieveSaveBtn();
+        } else {
+          this.renderSubmitBtnElement();
+          if (submitBtn) submitBtn.disabled = false;
         }
 
         // Show add another business button on the last card if it was hidden
@@ -584,6 +640,7 @@ class BusinessServiceForm extends HTMLElement {
         const wrapper = clickedItem.closest('.service-card');
         const businessCard = clickedItem.closest('.business-card');
         const allInputFields = businessCard.querySelectorAll('input');
+        const submitBtn = document.querySelector('.submit-btn');
 
         // Update button state
         clickedItem.classList.add('saved-btn');
@@ -593,10 +650,7 @@ class BusinessServiceForm extends HTMLElement {
         const collectedData = this.storeInformation(wrapper, businessCard);
         if (collectedData.length > 0) {
           this.renderSubmitBtnElement();
-          this.attachIntersectionObserver();
-          allInputFields.forEach((inputElem) => {
-            inputElem.disabled = true;
-          });
+          if (submitBtn) submitBtn.disabled = false;
         }
 
         console.log('storeInformation', this.__businessData);
@@ -646,7 +700,7 @@ class BusinessServiceForm extends HTMLElement {
                       btnTextElement.textContent = 'SAVE';
                       saveBtn.classList.remove('saved-btn');
                       saveBtn.disabled = true;
-                      this.removeInformation(serviceCard, businessCard);
+                      this.removeInformation(businessCard);
                     }
                   });
                 }
@@ -705,7 +759,7 @@ class BusinessServiceForm extends HTMLElement {
               btnTextElement.textContent = 'SAVE';
               saveBtn.classList.remove('saved-btn');
               saveBtn.disabled = true;
-              this.removeInformation(mainCard, card);
+              this.removeInformation(card);
             }
           });
 
@@ -819,9 +873,12 @@ class BusinessServiceForm extends HTMLElement {
 
   validateForm(input) {
     const card = input.closest('.business-card');
+    const { id } = card.dataset;
     const fields = card.querySelectorAll('input');
     const saveBtn = card.querySelector('.save-btn');
+    const saveBtnTextElem = saveBtn.querySelector('.save-btn-text');
     const addBtn = card.querySelector('.add-business-entry-btn');
+    const submitBtn = document.querySelector('.submit-btn');
 
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     const validatePhone = (phone) => phone.replace(/\D/g, '').length === 10;
@@ -961,6 +1018,15 @@ class BusinessServiceForm extends HTMLElement {
     const formValid = nameRequirementMet && contactRequirementMet;
     saveBtn.disabled = !formValid;
     addBtn.disabled = !formValid;
+
+    const isExistingItem = this.__businessData.filter((data) => data.id === id);
+    console.log(isExistingItem, 'isExistingItem');
+    if (isExistingItem && isExistingItem.length > 0) {
+      console.log('enter');
+      saveBtn.classList.remove('saved-btn');
+      saveBtnTextElem.innerText = 'SAVE';
+      submitBtn ? (submitBtn.disabled = true) : null;
+    }
   }
 
   /**
