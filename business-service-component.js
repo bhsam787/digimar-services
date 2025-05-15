@@ -112,6 +112,25 @@ class BusinessServiceForm extends HTMLElement {
     const latestInputs = container.lastElementChild.querySelectorAll('input');
     latestInputs.forEach((input) => {
       input.addEventListener('input', () => this.validateForm(input));
+      input.addEventListener('keydown', (e) => {
+        const id = e.target.id;
+
+        // Block space in email/phone fields entirely
+        if ((id === 'contactEmail' || id === 'contactPhone') && e.key === ' ') {
+          e.preventDefault();
+        }
+
+        // For name fields: block space only as the first character
+        if ((id === 'businessName' || id === 'contactName') && e.key === ' ') {
+          const inputValue = e.target.value;
+          const cursorPosition = e.target.selectionStart;
+
+          // Prevent if space is first character or cursor is at beginning
+          if (cursorPosition === 0 && inputValue.length === 0) {
+            e.preventDefault();
+          }
+        }
+      });
     });
   }
 
@@ -124,6 +143,12 @@ class BusinessServiceForm extends HTMLElement {
       const checkbox = card.querySelector('.service-card__checkbox');
       checkbox.addEventListener('change', () => {
         card.classList.toggle('active', checkbox.checked);
+        if (!card.classList.contains('active')) {
+          setTimeout(() => {
+            card.querySelector('.form-container').innerHTML = '';
+            card.classList.remove('business-option-added');
+          }, 400);
+        }
       });
     });
   }
@@ -526,8 +551,8 @@ class BusinessServiceForm extends HTMLElement {
         const nextBusinessCard = businessCard.nextElementSibling;
 
         this.removeBusiness(clickedItem);
-        //!isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
-        this.removeInformation(cardWrapper, businessCard);
+        !isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
+        //this.removeInformation(cardWrapper, businessCard);
 
         // Update UI based on remaining data
         if (this.__businessData.length === 0) {
@@ -700,6 +725,98 @@ class BusinessServiceForm extends HTMLElement {
    * @param {HTMLElement} input - The input element being validated
    */
 
+  // validateForm(input) {
+  //   const card = input.closest('.business-card');
+  //   const fields = card.querySelectorAll('input');
+  //   const saveBtn = card.querySelector('.save-btn');
+  //   const addBtn = card.querySelector('.add-business-entry-btn');
+
+  //   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  //   const validatePhone = (phone) => {
+  //     const digits = phone.replace(/\D/g, '');
+  //     return digits.length === 10;
+  //   };
+
+  //   const formatPhone = (input) => {
+  //     const digits = input.replace(/\D/g, '').substring(0, 10);
+  //     const part1 = digits.substring(0, 3);
+  //     const part2 = digits.substring(3, 6);
+  //     const part3 = digits.substring(6, 10);
+  //     if (digits.length > 6) return `${part1}-${part2}-${part3}`;
+  //     if (digits.length > 3) return `${part1}-${part2}`;
+  //     return part1;
+  //   };
+
+  //   // Auto-format phone input
+  //   const phoneField = card.querySelector('#contactPhone');
+  //   if (phoneField) {
+  //     phoneField.value = formatPhone(phoneField.value);
+  //   }
+
+  //   const showError = (field, message) => {
+  //     const errorDiv = field.parentElement.querySelector('.error-message');
+  //     if (errorDiv) {
+  //       errorDiv.textContent = message;
+  //       errorDiv.style.color = 'red';
+  //     }
+  //   };
+
+  //   const clearError = (field) => {
+  //     const errorDiv = field.parentElement.querySelector('.error-message');
+  //     if (errorDiv) errorDiv.textContent = '';
+  //   };
+
+  //   const getFieldValue = (id) => card.querySelector(`#${id}`)?.value.trim() || '';
+
+  //   const businessName = getFieldValue('businessName');
+  //   const contactName = getFieldValue('contactName');
+  //   const contactEmail = getFieldValue('contactEmail');
+  //   const contactPhone = getFieldValue('contactPhone');
+
+  //   const nameRequirementMet = businessName.length >= 3 || contactName.length > 0;
+  //   const contactRequirementMet = (contactEmail && validateEmail(contactEmail)) || (contactPhone && validatePhone(contactPhone));
+
+  //   // Clear group-related errors
+  //   clearError(card.querySelector('#businessName'));
+  //   clearError(card.querySelector('#contactName'));
+  //   clearError(card.querySelector('#contactEmail'));
+  //   clearError(card.querySelector('#contactPhone'));
+
+  //   // Show group-level errors if needed
+  //   if (!nameRequirementMet) {
+  //     const fallback = card.querySelector('#businessName') || card.querySelector('#contactName');
+  //     showError(fallback, 'Business or contact name is required');
+  //   }
+
+  //   if (!contactRequirementMet) {
+  //     const fallback = card.querySelector('#contactPhone') || card.querySelector('#contactEmail');
+  //     showError(fallback, 'Email or phone number is required');
+  //   }
+
+  //   // Individual validations (only apply if field has value)
+  //   fields.forEach((field) => {
+  //     const value = field.value.trim();
+  //     if (value) {
+  //       if (field.id === 'businessName' && value.length < 3) {
+  //         showError(field, 'Business name must be at least 3 characters');
+  //       }
+  //       if (field.id === 'contactEmail' && !validateEmail(value)) {
+  //         showError(field, 'Enter a valid email address');
+  //       }
+  //       if (field.id === 'contactPhone' && !validatePhone(value)) {
+  //         showError(field, 'Enter a valid phone number (e.g. 480-200-2999)');
+  //       }
+  //     } else {
+  //       clearError(field);
+  //     }
+  //   });
+
+  //   const formValid = nameRequirementMet && contactRequirementMet;
+  //   saveBtn.disabled = !formValid;
+  //   addBtn.disabled = !formValid;
+  // }
+
   validateForm(input) {
     const card = input.closest('.business-card');
     const fields = card.querySelectorAll('input');
@@ -707,11 +824,7 @@ class BusinessServiceForm extends HTMLElement {
     const addBtn = card.querySelector('.add-business-entry-btn');
 
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-    const validatePhone = (phone) => {
-      const digits = phone.replace(/\D/g, '');
-      return digits.length === 10;
-    };
+    const validatePhone = (phone) => phone.replace(/\D/g, '').length === 10;
 
     const formatPhone = (input) => {
       const digits = input.replace(/\D/g, '').substring(0, 10);
@@ -742,8 +855,20 @@ class BusinessServiceForm extends HTMLElement {
       if (errorDiv) errorDiv.textContent = '';
     };
 
-    const getFieldValue = (id) => card.querySelector(`#${id}`)?.value.trim() || '';
+    const cleanInput = (field) => {
+      let value = field.value;
 
+      if (field.id === 'contactEmail' || field.id === 'contactPhone') {
+        value = value.replace(/\s+/g, ''); // Remove all spaces
+      }
+
+      field.value = value;
+    };
+
+    // Clean inputs before checking values
+    fields.forEach(cleanInput);
+
+    const getFieldValue = (id) => card.querySelector(`#${id}`)?.value.trim() || '';
     const businessName = getFieldValue('businessName');
     const contactName = getFieldValue('contactName');
     const contactEmail = getFieldValue('contactEmail');
@@ -752,7 +877,26 @@ class BusinessServiceForm extends HTMLElement {
     const nameRequirementMet = businessName.length >= 3 || contactName.length > 0;
     const contactRequirementMet = (contactEmail && validateEmail(contactEmail)) || (contactPhone && validatePhone(contactPhone));
 
-    // Clear group-related errors
+    const updatePlaceholders = () => {
+      const contactNameInput = card.querySelector('#contactName');
+      const businessNameInput = card.querySelector('#businessName');
+      const contactEmailInput = card.querySelector('#contactEmail');
+      const contactPhoneInput = card.querySelector('#contactPhone');
+
+      const businessNameVal = businessNameInput.value.trim();
+      const contactNameVal = contactNameInput.value.trim();
+      const contactPhoneVal = contactPhoneInput.value.trim();
+      const contactEmailVal = contactEmailInput.value.trim();
+
+      businessNameInput.placeholder = contactNameVal ? 'Business name' : 'Business name*';
+      contactNameInput.placeholder = businessNameVal ? 'Contact name' : 'Contact name*';
+      contactEmailInput.placeholder = contactPhoneVal ? 'Email' : 'Email*';
+      contactPhoneInput.placeholder = contactEmailVal ? 'Phone number' : 'Phone number*';
+    };
+
+    updatePlaceholders();
+
+    // Clear previous errors
     clearError(card.querySelector('#businessName'));
     clearError(card.querySelector('#contactName'));
     clearError(card.querySelector('#contactEmail'));
@@ -769,17 +913,44 @@ class BusinessServiceForm extends HTMLElement {
       showError(fallback, 'Email or phone number is required');
     }
 
-    // Individual validations (only apply if field has value)
+    // Set max lengths
+    const setMaxLengths = () => {
+      const maxLengths = {
+        contactName: 255,
+        contactEmail: 255,
+        contactPhone: 30,
+        businessName: 255,
+      };
+
+      for (const id in maxLengths) {
+        const field = card.querySelector(`#${id}`);
+        if (field) {
+          field.setAttribute('maxlength', maxLengths[id]);
+        }
+      }
+    };
+
+    setMaxLengths();
+
+    // Individual validations
     fields.forEach((field) => {
       const value = field.value.trim();
+      const id = field.id;
+      const max = id === 'contactPhone' ? 30 : 255;
+
+      if (value.length > max) {
+        showError(field, `Must be within ${max} characters`);
+        return;
+      }
+
       if (value) {
-        if (field.id === 'businessName' && value.length < 3) {
+        if (id === 'businessName' && value.length < 3) {
           showError(field, 'Business name must be at least 3 characters');
         }
-        if (field.id === 'contactEmail' && !validateEmail(value)) {
+        if (id === 'contactEmail' && !validateEmail(value)) {
           showError(field, 'Enter a valid email address');
         }
-        if (field.id === 'contactPhone' && !validatePhone(value)) {
+        if (id === 'contactPhone' && !validatePhone(value)) {
           showError(field, 'Enter a valid phone number (e.g. 480-200-2999)');
         }
       } else {
@@ -821,7 +992,8 @@ class BusinessServiceForm extends HTMLElement {
   async sendLeadData(payload) {
     const updatedData = payload.map((item) => ({
       ...item,
-      contactPhone: item.contactPhone.startsWith('+1') ? item.contactPhone : `+1${item.contactPhone}`,
+      contactPhone:
+        item.contactPhone !== '' && !item.contactPhone.startsWith('+1') ? `+1${item.contactPhone}` : item.contactPhone,
     }));
     try {
       // const response = await fetch('https://dev.emerchantauthority.com/api/lead', {
