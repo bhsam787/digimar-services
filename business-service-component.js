@@ -163,8 +163,6 @@ class BusinessServiceForm extends HTMLElement {
               this.removeSubmitBtnWrapper();
               this.retrieveSaveBtn();
             }
-
-            console.log(this.__businessData, 'uncheck');
           }, 400);
         }
       });
@@ -226,8 +224,6 @@ class BusinessServiceForm extends HTMLElement {
       this.__businessData.push(newEntry);
     }
 
-    console.log(this.__businessData, 'savingss');
-
     return this.__businessData;
   }
 
@@ -241,8 +237,6 @@ class BusinessServiceForm extends HTMLElement {
     const cardId = businessCard.dataset.id;
 
     this.__businessData = this.__businessData.filter((item) => item.id !== cardId);
-
-    console.log(this.__businessData, 'remove data');
   }
 
   /**
@@ -415,10 +409,10 @@ class BusinessServiceForm extends HTMLElement {
    */
   printErrors(field, message) {
     return `
-      <li class="error-item">
-        <strong>Error in "${field}": </strong>${message}
-      </li>
-    `.trim();
+    <li class="error-item">
+      <strong>Error in "${field}": </strong>${message}
+    </li>
+  `.trim();
   }
 
   /**
@@ -426,9 +420,13 @@ class BusinessServiceForm extends HTMLElement {
    * @param {Object} errorObj - Object containing error messages by field
    * @returns {string} HTML markup for error modal
    */
-  errorModalShow(errorObj) {
-    const allErrorDomStr = Object.entries(errorObj)
-      .map(([field, message]) => this.printErrors(field, message))
+  errorModalShow(errorArray) {
+    const allErrorDomStr = errorArray
+      .flatMap((errorObj) => {
+        return Object.entries(errorObj).flatMap(([field, messages]) => {
+          return messages.map((message) => this.printErrors(field, message));
+        });
+      })
       .join('\n');
 
     return `
@@ -446,26 +444,6 @@ class BusinessServiceForm extends HTMLElement {
     </div>
     `.trim();
   }
-
-  /**
-   * Initializes the component
-   * Fetches business data and sets up event listeners
-   */
-  // async init() {
-  //   this.attachCheckBoxInputListener();
-
-  //   const container = this.querySelector('.service-card-container');
-  //   const businessData = await this.fetchBusinessData();
-
-  //   // Render service cards if data is available
-  //   if (businessData?.data?.length) {
-  //     const totalListItems = businessData.meta.totalCount;
-  //     container.innerHTML = businessData.data.map(this.createServiceCard).join('');
-  //   }
-
-  //   this.attachGlobalListeners();
-  //   this.attachCheckBoxInputListener();
-  // }
 
   splitIntoColumnsByChunk(items, columnCount = 3) {
     const total = items.length;
@@ -598,13 +576,11 @@ class BusinessServiceForm extends HTMLElement {
         const cardWrapper = clickedItem.closest('.service-card');
         const formContainer = cardWrapper.querySelector('.form-container');
         const businessCard = clickedItem.closest('.business-card');
-        const isSavedButtonExist = businessCard.querySelector('.save-btn.saved-btn');
         const previousBusinessCard = businessCard.previousElementSibling;
         const nextBusinessCard = businessCard.nextElementSibling;
         const submitBtn = document.querySelector('.submit-btn');
 
         this.removeBusiness(clickedItem);
-        //!isSavedButtonExist ? this.removeInformation(cardWrapper, businessCard) : null;
         this.removeInformation(businessCard);
 
         // Update UI based on remaining data
@@ -652,8 +628,6 @@ class BusinessServiceForm extends HTMLElement {
           this.renderSubmitBtnElement();
           if (submitBtn) submitBtn.disabled = false;
         }
-
-        console.log('storeInformation', this.__businessData);
       }
 
       // Handle "Submit" button click
@@ -670,7 +644,6 @@ class BusinessServiceForm extends HTMLElement {
           clickedItem.innerHTML = `<span class="spinner"></span>`;
           const isExistDuplicatePhoneNumber = this.findItemsWithDuplicatePhones(this.__businessData);
           if (isExistDuplicatePhoneNumber.length > 0) {
-            console.log(isExistDuplicatePhoneNumber, 'isExistDuplicatePhoneNumber');
             setTimeout(() => {
               clickedItem.disabled = false;
               clickedItem.innerHTML = 'SUBMIT';
@@ -680,7 +653,6 @@ class BusinessServiceForm extends HTMLElement {
                 const isExistElement = [...contactPhoneInput].filter(
                   (el) => el.value !== '' && el.value.trim() === item.contactPhone.trim()
                 );
-                console.log(isExistElement, 'isExistElement');
                 if (isExistElement.length > 0) {
                   isExistElement.forEach((element) => {
                     const businessCard = element.closest('.business-card');
@@ -700,19 +672,20 @@ class BusinessServiceForm extends HTMLElement {
                       btnTextElement.textContent = 'SAVE';
                       saveBtn.classList.remove('saved-btn');
                       saveBtn.disabled = true;
-                      this.removeInformation(businessCard);
+                      clickedItem.disabled = true;
                     }
                   });
                 }
               });
 
-              console.log('businessData', this.__businessData);
               if (this.__businessData.length === 0) {
                 this.removeSubmitBtnWrapper();
                 this.retrieveSaveBtn();
               }
             }, 300);
             return;
+          } else {
+            this.__businessData.length > 0 ? (clickedItem.disabled = false) : null;
           }
           this.sendLeadData(this.__businessData)
             .then((result) => {
@@ -746,7 +719,6 @@ class BusinessServiceForm extends HTMLElement {
         const errorWrapper = modalContainer.querySelector('.errors-wrapper');
         if (!errorWrapper) this.resetDom();
         if (errorWrapper) {
-          console.log(this.__businessData, 'this.__businessData');
           const businessCards = document.querySelectorAll('.business-card');
           businessCards.forEach((card) => {
             const mainCard = card.closest('.service-card');
@@ -767,7 +739,6 @@ class BusinessServiceForm extends HTMLElement {
             this.removeSubmitBtnWrapper();
             this.retrieveSaveBtn();
           }
-          console.log(this.__businessData, 'this.__businessData agaian');
         }
       }
     });
@@ -778,98 +749,6 @@ class BusinessServiceForm extends HTMLElement {
    * Enables/disables buttons based on validation results
    * @param {HTMLElement} input - The input element being validated
    */
-
-  // validateForm(input) {
-  //   const card = input.closest('.business-card');
-  //   const fields = card.querySelectorAll('input');
-  //   const saveBtn = card.querySelector('.save-btn');
-  //   const addBtn = card.querySelector('.add-business-entry-btn');
-
-  //   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  //   const validatePhone = (phone) => {
-  //     const digits = phone.replace(/\D/g, '');
-  //     return digits.length === 10;
-  //   };
-
-  //   const formatPhone = (input) => {
-  //     const digits = input.replace(/\D/g, '').substring(0, 10);
-  //     const part1 = digits.substring(0, 3);
-  //     const part2 = digits.substring(3, 6);
-  //     const part3 = digits.substring(6, 10);
-  //     if (digits.length > 6) return `${part1}-${part2}-${part3}`;
-  //     if (digits.length > 3) return `${part1}-${part2}`;
-  //     return part1;
-  //   };
-
-  //   // Auto-format phone input
-  //   const phoneField = card.querySelector('#contactPhone');
-  //   if (phoneField) {
-  //     phoneField.value = formatPhone(phoneField.value);
-  //   }
-
-  //   const showError = (field, message) => {
-  //     const errorDiv = field.parentElement.querySelector('.error-message');
-  //     if (errorDiv) {
-  //       errorDiv.textContent = message;
-  //       errorDiv.style.color = 'red';
-  //     }
-  //   };
-
-  //   const clearError = (field) => {
-  //     const errorDiv = field.parentElement.querySelector('.error-message');
-  //     if (errorDiv) errorDiv.textContent = '';
-  //   };
-
-  //   const getFieldValue = (id) => card.querySelector(`#${id}`)?.value.trim() || '';
-
-  //   const businessName = getFieldValue('businessName');
-  //   const contactName = getFieldValue('contactName');
-  //   const contactEmail = getFieldValue('contactEmail');
-  //   const contactPhone = getFieldValue('contactPhone');
-
-  //   const nameRequirementMet = businessName.length >= 3 || contactName.length > 0;
-  //   const contactRequirementMet = (contactEmail && validateEmail(contactEmail)) || (contactPhone && validatePhone(contactPhone));
-
-  //   // Clear group-related errors
-  //   clearError(card.querySelector('#businessName'));
-  //   clearError(card.querySelector('#contactName'));
-  //   clearError(card.querySelector('#contactEmail'));
-  //   clearError(card.querySelector('#contactPhone'));
-
-  //   // Show group-level errors if needed
-  //   if (!nameRequirementMet) {
-  //     const fallback = card.querySelector('#businessName') || card.querySelector('#contactName');
-  //     showError(fallback, 'Business or contact name is required');
-  //   }
-
-  //   if (!contactRequirementMet) {
-  //     const fallback = card.querySelector('#contactPhone') || card.querySelector('#contactEmail');
-  //     showError(fallback, 'Email or phone number is required');
-  //   }
-
-  //   // Individual validations (only apply if field has value)
-  //   fields.forEach((field) => {
-  //     const value = field.value.trim();
-  //     if (value) {
-  //       if (field.id === 'businessName' && value.length < 3) {
-  //         showError(field, 'Business name must be at least 3 characters');
-  //       }
-  //       if (field.id === 'contactEmail' && !validateEmail(value)) {
-  //         showError(field, 'Enter a valid email address');
-  //       }
-  //       if (field.id === 'contactPhone' && !validatePhone(value)) {
-  //         showError(field, 'Enter a valid phone number (e.g. 480-200-2999)');
-  //       }
-  //     } else {
-  //       clearError(field);
-  //     }
-  //   });
-
-  //   const formValid = nameRequirementMet && contactRequirementMet;
-  //   saveBtn.disabled = !formValid;
-  //   addBtn.disabled = !formValid;
-  // }
 
   validateForm(input) {
     const card = input.closest('.business-card');
@@ -1008,7 +887,7 @@ class BusinessServiceForm extends HTMLElement {
           showError(field, 'Enter a valid email address');
         }
         if (id === 'contactPhone' && !validatePhone(value)) {
-          showError(field, 'Enter a valid phone number (e.g. 480-200-2999)');
+          showError(field, 'Enter a valid phone number');
         }
       } else {
         clearError(field);
@@ -1020,9 +899,7 @@ class BusinessServiceForm extends HTMLElement {
     addBtn.disabled = !formValid;
 
     const isExistingItem = this.__businessData.filter((data) => data.id === id);
-    console.log(isExistingItem, 'isExistingItem');
     if (isExistingItem && isExistingItem.length > 0) {
-      console.log('enter');
       saveBtn.classList.remove('saved-btn');
       saveBtnTextElem.innerText = 'SAVE';
       submitBtn ? (submitBtn.disabled = true) : null;
@@ -1034,17 +911,28 @@ class BusinessServiceForm extends HTMLElement {
    * @param {string} jsonString - JSON response string
    * @returns {Object} Formatted error messages by field
    */
-  extractValidationErrors(json) {
-    const result = {};
-    const parsed = typeof json === 'string' ? JSON.parse(json) : json;
 
-    for (const index in parsed.errors) {
-      const fields = parsed.errors[index];
-      for (const fieldName in fields) {
-        const fieldErrors = fields[fieldName];
-        // Combine all messages for this field
-        result[fieldName] = Object.values(fieldErrors).join(', ');
+  extractValidationErrors(json) {
+    const parsed = typeof json === 'string' ? JSON.parse(json) : json;
+    const errorMap = {};
+
+    for (const errorObj of parsed.errors) {
+      for (const fieldName in errorObj) {
+        if (!errorMap[fieldName]) {
+          errorMap[fieldName] = new Set();
+        }
+        for (const message of errorObj[fieldName]) {
+          errorMap[fieldName].add(message);
+        }
       }
+    }
+
+    // Convert Set back to array and wrap in array of objects
+    const result = [];
+    for (const fieldName in errorMap) {
+      result.push({
+        [fieldName]: Array.from(errorMap[fieldName]),
+      });
     }
 
     return result;
@@ -1078,7 +966,6 @@ class BusinessServiceForm extends HTMLElement {
 
       // Handle error response
       if (!response.ok) {
-        console.log('enter', this.extractValidationErrors(responseData));
         return {
           success: false,
           status: response.status,

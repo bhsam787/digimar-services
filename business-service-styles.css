@@ -395,6 +395,10 @@ body {
 }
 
 .service-wrapper .submit-wrapper .submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 43px;
   width: 100%;
   font-family: var(--font-family);
   font-weight: 700;
