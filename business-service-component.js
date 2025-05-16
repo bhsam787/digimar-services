@@ -640,8 +640,8 @@ class BusinessServiceForm extends HTMLElement {
 
         // Submit data if available
         if (this.__businessData.length > 0) {
-          clickedItem.disabled = true;
           clickedItem.innerHTML = `<span class="spinner"></span>`;
+          clickedItem.disabled = true;
           const isExistDuplicatePhoneNumber = this.findItemsWithDuplicatePhones(this.__businessData);
           if (isExistDuplicatePhoneNumber.length > 0) {
             setTimeout(() => {
@@ -685,27 +685,26 @@ class BusinessServiceForm extends HTMLElement {
             }, 300);
             return;
           } else {
-            this.__businessData.length > 0 ? (clickedItem.disabled = false) : null;
-          }
-          this.sendLeadData(this.__businessData)
-            .then((result) => {
-              //Reset modal classes
-              modalContainer.className = '';
-              modalContainer.classList.add(buttonId);
-              modalWrapper.classList.add('modal-active');
-              // Show success or error modal based on result
-              modalBody.innerHTML = result?.success ? this.successModalShow() : this.errorModalShow(result.error);
+            this.sendLeadData(this.__businessData)
+              .then((result) => {
+                //Reset modal classes
+                modalContainer.className = '';
+                modalContainer.classList.add(buttonId);
+                modalWrapper.classList.add('modal-active');
+                // Show success or error modal based on result
+                modalBody.innerHTML = result?.success ? this.successModalShow() : this.errorModalShow(result.error);
 
-              // Simulated delay or async task
-              setTimeout(() => {
+                // Simulated delay or async task
+                setTimeout(() => {
+                  clickedItem.disabled = false;
+                  clickedItem.innerHTML = 'SUBMIT';
+                }, 1200);
+              })
+              .catch((err) => {
                 clickedItem.disabled = false;
                 clickedItem.innerHTML = 'SUBMIT';
-              }, 1200);
-            })
-            .catch((err) => {
-              clickedItem.disabled = false;
-              clickedItem.innerHTML = 'SUBMIT';
-            });
+              });
+          }
         }
       }
 
