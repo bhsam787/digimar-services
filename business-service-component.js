@@ -115,7 +115,6 @@ class BusinessServiceForm extends HTMLElement {
 
     // Insert form into container
     container.insertAdjacentHTML('beforeend', formHtml);
-
     // Add validation listeners to all input fields
     const latestInputs = container.lastElementChild.querySelectorAll('input');
     latestInputs.forEach((input) => {
