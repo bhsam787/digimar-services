@@ -683,7 +683,6 @@ class BusinessServiceForm extends HTMLElement {
                 this.retrieveSaveBtn();
               }
             }, 300);
-            return;
           } else {
             this.sendLeadData(this.__businessData)
               .then((result) => {
