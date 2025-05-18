@@ -42,13 +42,6 @@ body {
 }
 
 .service-wrapper .service-card {
-  /* position: relative;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
-  padding: 16px 20px;
-  background-color: #fff;
-  transition: border-color 0.3s; */
-
   position: relative;
   display: inline-block;
   width: 100%;
@@ -319,10 +312,6 @@ body {
   cursor: pointer;
 }
 
-/* .service-wrapper .save-btn:not(.saved-btn) {
-  cursor: pointer;
-} */
-
 .service-wrapper .save-btn.saved-btn + .add-business-entry-btn {
   cursor: pointer;
 }
@@ -346,10 +335,6 @@ body {
   background-color: #ff66001a;
   pointer-events: none;
 }
-
-/* .service-wrapper .save-btn:not(.saved-btn) + .add-business-entry-btn {
-  opacity: 0.5;
-} */
 
 .service-wrapper .save-btn.saved-btn .save-btn-text {
   color: #ff6600;

@@ -469,9 +469,6 @@ class BusinessServiceForm extends HTMLElement {
    */
   async fetchBusinessData() {
     try {
-      // const response = await fetch('https://dev.emerchantauthority.com/api/business?itemsPerPage=100', {
-      // Not using ths for now because it gives cors origin error. If this codes will be in the symfony app, then it will work.
-
       const response = await fetch('/api/business', {
         // used "/api/business" from a local server to avoid CORS issues
         headers: {
@@ -728,246 +725,6 @@ class BusinessServiceForm extends HTMLElement {
    * @param {HTMLElement} input - The input element being validated
    */
 
-  // validateForm(input) {
-  //   const card = input.closest('.business-card');
-  //   const { id } = card.dataset;
-  //   const fields = card.querySelectorAll('input');
-  //   const saveBtn = card.querySelector('.save-btn');
-  //   const saveBtnTextElem = saveBtn.querySelector('.save-btn-text');
-  //   const addBtn = card.querySelector('.add-business-entry-btn');
-  //   const submitBtn = document.querySelector('.submit-btn');
-
-  //   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  //   const validatePhone = (phone) => phone.replace(/\D/g, '').length === 10;
-
-  //   const formatPhone = (input) => {
-  //     const digits = input.replace(/\D/g, '').substring(0, 10);
-  //     const part1 = digits.substring(0, 3);
-  //     const part2 = digits.substring(3, 6);
-  //     const part3 = digits.substring(6, 10);
-  //     if (digits.length > 6) return `${part1}-${part2}-${part3}`;
-  //     if (digits.length > 3) return `${part1}-${part2}`;
-  //     return part1;
-  //   };
-
-  //   // Auto-format phone input
-  //   const phoneField = card.querySelector('#contactPhone');
-  //   if (phoneField) {
-  //     phoneField.value = formatPhone(phoneField.value);
-  //   }
-
-  //   const showError = (field, message) => {
-  //     const errorDiv = field.parentElement.querySelector('.error-message');
-  //     if (errorDiv) {
-  //       errorDiv.textContent = message;
-  //       errorDiv.style.color = 'red';
-  //     }
-  //   };
-
-  //   const clearError = (field) => {
-  //     const errorDiv = field.parentElement.querySelector('.error-message');
-  //     if (errorDiv) errorDiv.textContent = '';
-  //   };
-
-  //   const cleanInput = (field) => {
-  //     let value = field.value;
-  //     if (field.id === 'contactEmail' || field.id === 'contactPhone') {
-  //       value = value.replace(/\s+/g, '');
-  //     }
-  //     field.value = value;
-  //   };
-
-  //   fields.forEach(cleanInput);
-
-  //   const getFieldValue = (id) => card.querySelector(`#${id}`)?.value.trim() || '';
-  //   const businessName = getFieldValue('businessName');
-  //   const contactName = getFieldValue('contactName');
-  //   const contactEmail = getFieldValue('contactEmail');
-  //   const contactPhone = getFieldValue('contactPhone');
-
-  //   const nameRequirementMet = businessName.length >= 3 || contactName.length > 0;
-  //   const contactRequirementMet = (contactEmail && validateEmail(contactEmail)) || (contactPhone && validatePhone(contactPhone));
-
-  //   const updatePlaceholders = () => {
-  //     const contactNameInput = card.querySelector('#contactName');
-  //     const businessNameInput = card.querySelector('#businessName');
-  //     const contactEmailInput = card.querySelector('#contactEmail');
-  //     const contactPhoneInput = card.querySelector('#contactPhone');
-
-  //     const businessNameVal = businessNameInput.value.trim();
-  //     const contactNameVal = contactNameInput.value.trim();
-  //     const contactPhoneVal = contactPhoneInput.value.trim();
-  //     const contactEmailVal = contactEmailInput.value.trim();
-
-  //     businessNameInput.placeholder = contactNameVal ? 'Business name' : 'Business name*';
-  //     contactNameInput.placeholder = businessNameVal ? 'Contact name' : 'Contact name*';
-  //     contactEmailInput.placeholder = contactPhoneVal ? 'Email' : 'Email*';
-  //     contactPhoneInput.placeholder = contactEmailVal ? 'Phone number' : 'Phone number*';
-  //   };
-
-  //   updatePlaceholders();
-
-  //   // Clear previous errors
-  //   clearError(card.querySelector('#businessName'));
-  //   clearError(card.querySelector('#contactName'));
-  //   clearError(card.querySelector('#contactEmail'));
-  //   clearError(card.querySelector('#contactPhone'));
-
-  //   if (!nameRequirementMet) {
-  //     const fallback = card.querySelector('#businessName') || card.querySelector('#contactName');
-  //     showError(fallback, 'Business or contact name is required');
-  //   }
-
-  //   if (!contactRequirementMet) {
-  //     const fallback = card.querySelector('#contactPhone') || card.querySelector('#contactEmail');
-  //     showError(fallback, 'Email or phone number is required');
-  //   }
-
-  //   // Max lengths setup — REMOVE native maxlength attributes for reliable JS enforcement
-  //   // const maxLengths = {
-  //   //   contactName: 5,
-  //   //   contactEmail: 255,
-  //   //   contactPhone: 10,
-  //   //   businessName: 5,
-  //   // };
-
-  //   // // Remove native maxlength attributes (if any)
-  //   // for (const key in maxLengths) {
-  //   //   const field = card.querySelector(`#${key}`);
-  //   //   if (field) {
-  //   //     field.removeAttribute('maxlength'); // <--- remove native maxlength
-  //   //   }
-  //   // }
-
-  //   // Paste and input enforcement with truncation ONLY via JS
-  //   // fields.forEach((field) => {
-  //   //   const id = field.id;
-  //   //   const max = maxLengths[id] || 255;
-
-  //   //   if (!field.dataset.listenerAttached) {
-  //   //     field.dataset.listenerAttached = 'true';
-  //   //     field.addEventListener('input', () => {
-  //   //       const id = field.id;
-  //   //       const max = maxLengths[id] || 255;
-
-  //   //       if (id === 'contactPhone') {
-  //   //         const digits = field.value.replace(/\D/g, '').slice(0, max);
-  //   //         field.value = formatPhone(digits);
-  //   //       } else {
-  //   //         // Trim the field in case the initial paste exceeds max length
-  //   //         if (field.value.length > max) {
-  //   //           const cursorPos = field.selectionStart;
-  //   //           field.value = field.value.slice(0, max);
-  //   //           // Try to preserve cursor position if possible
-  //   //           field.setSelectionRange(Math.min(cursorPos, max), Math.min(cursorPos, max));
-  //   //         }
-  //   //       }
-  //   //     });
-
-  //   //     field.addEventListener('paste', (e) => {
-  //   //       e.preventDefault();
-
-  //   //       const id = field.id;
-  //   //       const max = maxLengths[id] || 255;
-
-  //   //       const paste = (e.clipboardData || window.clipboardData).getData('text');
-  //   //       const selectionStart = field.selectionStart;
-  //   //       const selectionEnd = field.selectionEnd;
-  //   //       const currentValue = field.value;
-
-  //   //       const before = currentValue.slice(0, selectionStart);
-  //   //       const after = currentValue.slice(selectionEnd);
-
-  //   //       let newValue;
-  //   //       if (id === 'contactPhone') {
-  //   //         const combined = (before + paste.replace(/\D/g, '') + after).slice(0, max);
-  //   //         newValue = formatPhone(combined);
-  //   //       } else {
-  //   //         const allowedPasteLength = max - (before.length + after.length);
-  //   //         const safePaste = paste.slice(0, allowedPasteLength);
-  //   //         newValue = (before + safePaste + after).slice(0, max);
-  //   //       }
-
-  //   //       field.value = newValue;
-
-  //   //       // Set cursor position after paste
-  //   //       const newCursorPos = newValue.length - after.length;
-  //   //       field.setSelectionRange(newCursorPos, newCursorPos);
-  //   //     });
-
-  //   //     field.addEventListener('beforeinput', (e) => {
-  //   //       const id = field.id;
-  //   //       const max = maxLengths[id] || 255;
-
-  //   //       if (e.inputType === 'insertFromPaste') {
-  //   //         e.preventDefault();
-
-  //   //         const paste = (e.data || '').toString();
-  //   //         const selectionStart = field.selectionStart;
-  //   //         const selectionEnd = field.selectionEnd;
-  //   //         const currentValue = field.value;
-
-  //   //         const before = currentValue.slice(0, selectionStart);
-  //   //         const after = currentValue.slice(selectionEnd);
-
-  //   //         let newValue;
-
-  //   //         if (id === 'contactPhone') {
-  //   //           const cleanBefore = before.replace(/\D/g, '');
-  //   //           const cleanAfter = after.replace(/\D/g, '');
-  //   //           const cleanPaste = paste.replace(/\D/g, '');
-  //   //           const combined = (cleanBefore + cleanPaste + cleanAfter).slice(0, max);
-  //   //           newValue = formatPhone(combined);
-  //   //         } else {
-  //   //           const spaceAvailable = max - (before.length + after.length);
-  //   //           const safePaste = paste.slice(0, spaceAvailable);
-  //   //           newValue = (before + safePaste + after).slice(0, max);
-  //   //         }
-
-  //   //         field.value = newValue;
-
-  //   //         const cursorPos = newValue.length - after.length;
-  //   //         field.setSelectionRange(cursorPos, cursorPos);
-  //   //       }
-  //   //     });
-  //   //   }
-  //   // });
-
-  //   // Final individual field validations
-  //   fields.forEach((field) => {
-  //     const value = field.value.trim();
-  //     const id = field.id;
-
-  //     if (value) {
-  //       if (id === 'businessName' && value.length < 3) {
-  //         showError(field, 'Business name must be at least 3 characters');
-  //       }
-  //       if (id === 'contactEmail' && !validateEmail(value)) {
-  //         showError(field, 'Enter a valid email address');
-  //       }
-  //       if (id === 'contactPhone' && !validatePhone(value)) {
-  //         showError(field, 'Enter a valid phone number');
-  //       }
-  //     } else {
-  //       clearError(field);
-  //     }
-  //   });
-
-  //   const formValid = nameRequirementMet && contactRequirementMet;
-  //   saveBtn.disabled = !formValid;
-  //   addBtn.disabled = !formValid;
-
-  //   const isExistingItem = this.__businessData.filter((data) => data.id === id);
-  //   if (isExistingItem && isExistingItem.length > 0) {
-  //     saveBtn.classList.remove('saved-btn');
-  //     saveBtnTextElem.innerText = 'SAVE';
-  //     if (submitBtn) submitBtn.disabled = true;
-  //   }
-  // }
-
-  // Refactored handler attachment function
-
-  // Refactored handler attachment function
   // Refactored handler attachment function
   attachInputHandlers(input) {
     if (input.dataset.listenerAttached) return;
@@ -1007,7 +764,10 @@ class BusinessServiceForm extends HTMLElement {
     input.addEventListener('beforeinput', (e) => {
       if (e.inputType === 'insertFromPaste') {
         e.preventDefault();
-        const paste = (e.data || '').toString();
+        let paste = (e.data || '').toString();
+        if (id === 'contactName' || id === 'businessName') {
+          paste = paste.trim();
+        }
         const selStart = input.selectionStart;
         const selEnd = input.selectionEnd;
         const currentValue = input.value;
@@ -1215,17 +975,18 @@ class BusinessServiceForm extends HTMLElement {
    * @returns {Promise<Object>} Response with success status and data/error
    */
   async sendLeadData(payload) {
-    const updatedData = payload.map((item) => ({
-      ...item,
-      contactPhone:
-        item.contactPhone !== '' && !item.contactPhone.startsWith('+1') ? `+1${item.contactPhone}` : item.contactPhone,
-    }));
+    const updatedData = payload.map((item) => {
+      let phone = item.contactPhone.replace(/-/g, ''); // remove dashes
+      if (phone !== '' && !phone.startsWith('+1')) {
+        phone = `+1${phone}`;
+      }
+      return {
+        ...item,
+        contactPhone: phone,
+      };
+    });
     try {
-      // const response = await fetch('https://dev.emerchantauthority.com/api/lead', {
-      // Not using ths for now because it gives cors origin error. If this codes will be in the symfony app, then it will work.
       const response = await fetch('/api/lead', {
-        // used "/api/lead" from a local server to avoid CORS issues
-
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
