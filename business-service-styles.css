@@ -110,7 +110,7 @@ body {
 .service-wrapper .input-wrapper input {
   font-family: var(--font-family-secondary);
   font-weight: 500;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 100%;
   letter-spacing: 0px;
   padding: 14px 24px;
