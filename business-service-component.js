@@ -387,42 +387,63 @@ class BusinessServiceForm extends HTMLElement {
    * @param {string} message - Error message
    * @returns {string} HTML markup for error item
    */
-  printErrors(field, message) {
-    return `
-    <li class="error-item">
-      <strong>Error in "${field}": </strong>${message}
-    </li>
-  `.trim();
-  }
+  // printErrors(field, message) {
+  //   return `
+  //   <li class="error-item">
+  //     <strong>Error in "${field}": </strong>${message}
+  //   </li>
+  // `.trim();
+  // }
 
   /**
    * Creates HTML for the error modal containing all validation errors
    * @param {Object} errorObj - Object containing error messages by field
    * @returns {string} HTML markup for error modal
    */
-  errorModalShow(errorArray) {
-    const allErrorDomStr = errorArray
-      .flatMap((errorObj) => {
-        return Object.entries(errorObj).flatMap(([field, messages]) => {
-          return messages.map((message) => this.printErrors(field, message));
-        });
-      })
-      .join('\n');
+  // errorModalShow(errorArray) {
+  //   const allErrorDomStr = errorArray
+  //     .flatMap((errorObj) => {
+  //       return Object.entries(errorObj).flatMap(([field, messages]) => {
+  //         return messages.map((message) => this.printErrors(field, message));
+  //       });
+  //     })
+  //     .join('\n');
 
-    return `
-    <div class="modal">
-      <div class="modal-icon error-modal-icon-container">
-        <div class="error-modal-icon">
-          ${this.icons.cross}
-        </div>
-      </div>
-      <h2>Error!</h2>
-      <ul class="errors-wrapper">
-        ${allErrorDomStr}
-      </ul>
-      <button class="modal-btn" type="button">OK</button>
-    </div>
-    `.trim();
+  //   return `
+  //   <div class="modal">
+  //     <div class="modal-icon error-modal-icon-container">
+  //       <div class="error-modal-icon">
+  //         ${this.icons.cross}
+  //       </div>
+  //     </div>
+  //     <h2>Error!</h2>
+  //     <ul class="errors-wrapper">
+  //       ${allErrorDomStr}
+  //     </ul>
+  //     <button class="modal-btn" type="button">OK</button>
+  //   </div>
+  //   `.trim();
+  // }
+
+  printErrorInRespectiveInputField(errorResponse) {
+    Object.entries(errorResponse).forEach(([indexStr, fieldErrors]) => {
+      const index = parseInt(indexStr);
+      const business = this.__businessData[index];
+      if (!business) return;
+
+      const businessCard = document.querySelector(`.business-card[data-id="${business.id}"]`);
+      if (!businessCard) return;
+
+      Object.entries(fieldErrors).forEach(([fieldKey, errorMessages]) => {
+        console.log(fieldKey, errorMessages);
+        const inputField = businessCard.querySelector(`input#${fieldKey}`);
+        const errorDiv = inputField?.nextElementSibling;
+
+        if (errorDiv && errorDiv.classList.contains('error-message')) {
+          errorDiv.innerHTML = errorMessages.join('<br>');
+        }
+      });
+    });
   }
 
   splitIntoColumnsByChunk(items, columnCount = 3) {
@@ -663,12 +684,16 @@ class BusinessServiceForm extends HTMLElement {
           } else {
             this.sendLeadData(this.__businessData)
               .then((result) => {
-                //Reset modal classes
-                modalContainer.className = '';
-                modalContainer.classList.add(buttonId);
-                modalWrapper.classList.add('modal-active');
                 // Show success or error modal based on result
-                modalBody.innerHTML = result?.success ? this.successModalShow() : this.errorModalShow(result.error);
+                if (result && result.success) {
+                  //Reset modal classes
+                  modalContainer.className = '';
+                  modalContainer.classList.add(buttonId);
+                  modalWrapper.classList.add('modal-active');
+                  modalBody.innerHTML = this.successModalShow();
+                } else {
+                  this.printErrorInRespectiveInputField(result.error);
+                }
 
                 // Simulated delay or async task
                 setTimeout(() => {
@@ -706,7 +731,7 @@ class BusinessServiceForm extends HTMLElement {
               btnTextElement.textContent = 'SAVE';
               saveBtn.classList.remove('saved-btn');
               saveBtn.disabled = true;
-              this.removeInformation(card);
+              //this.removeInformation(card);
             }
           });
 
@@ -1001,7 +1026,8 @@ class BusinessServiceForm extends HTMLElement {
         return {
           success: false,
           status: response.status,
-          error: this.extractValidationErrors(responseData),
+          //error: this.extractValidationErrors(responseData),
+          error: responseData.errors,
         };
       }
 

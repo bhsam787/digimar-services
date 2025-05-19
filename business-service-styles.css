@@ -108,6 +108,7 @@ body {
 }
 
 .service-wrapper .input-wrapper input {
+  width: 100%;
   font-family: var(--font-family-secondary);
   font-weight: 500;
   font-size: 16px;
@@ -142,15 +143,14 @@ body {
 }
 
 .service-wrapper .input-wrapper .error-message {
-  position: absolute;
-  bottom: 5px;
-  left: 5px;
   font-family: var(--font-family);
   font-weight: 500;
   font-size: 12px;
   line-height: 100%;
   letter-spacing: 0px;
   color: red;
+  transform: translateY(-14px);
+  margin: 0 5px;
 }
 
 /* Hide default checkbox */
