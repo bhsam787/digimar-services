@@ -425,6 +425,16 @@ class BusinessServiceForm extends HTMLElement {
   //   `.trim();
   // }
 
+  cleanAllErrorMsg() {
+    const allErrorDomStr = document.querySelectorAll('.error-message');
+    allErrorDomStr.forEach((errorDom) => {
+      const inputField = errorDom.previousElementSibling;
+      if (inputField) inputField.classList.remove('has-error');
+      errorDom.textContent = '';
+      errorDom.removeAttribute('style');
+    });
+  }
+
   printErrorInRespectiveInputField(errorResponse) {
     Object.entries(errorResponse).forEach(([indexStr, fieldErrors]) => {
       const index = parseInt(indexStr);
@@ -440,6 +450,7 @@ class BusinessServiceForm extends HTMLElement {
         const errorDiv = inputField?.nextElementSibling;
 
         if (errorDiv && errorDiv.classList.contains('error-message')) {
+          inputField.classList.add('has-error');
           errorDiv.innerHTML = errorMessages.join('<br>');
         }
       });
@@ -643,6 +654,7 @@ class BusinessServiceForm extends HTMLElement {
           const isExistDuplicatePhoneNumber = this.findItemsWithDuplicatePhones(this.__businessData);
           if (isExistDuplicatePhoneNumber.length > 0) {
             setTimeout(() => {
+              this.cleanAllErrorMsg();
               clickedItem.disabled = false;
               clickedItem.innerHTML = 'SUBMIT';
               isExistDuplicatePhoneNumber.forEach((item) => {
@@ -661,7 +673,7 @@ class BusinessServiceForm extends HTMLElement {
                     const btnTextElement = saveBtn.querySelector('.save-btn-text');
 
                     if (errorMessageElem) errorMessageElem.innerText = 'Duplicate phone number found';
-
+                    element.classList.add('has-error');
                     inputFields.forEach((input) => {
                       input.disabled = false;
                     });
@@ -692,6 +704,7 @@ class BusinessServiceForm extends HTMLElement {
                   modalWrapper.classList.add('modal-active');
                   modalBody.innerHTML = this.successModalShow();
                 } else {
+                  this.cleanAllErrorMsg();
                   this.printErrorInRespectiveInputField(result.error);
                 }
 
@@ -779,8 +792,9 @@ class BusinessServiceForm extends HTMLElement {
       }
       if ((id === 'businessName' || id === 'contactName') && e.key === ' ') {
         const cursor = input.selectionStart;
-        if (cursor === 0 && input.value.length === 0) {
-          e.preventDefault();
+        const prevChar = input.value[cursor - 1];
+        if (cursor === 0 || prevChar === ' ') {
+          e.preventDefault(); // block space at start or after another space
         }
       }
     });
@@ -866,8 +880,12 @@ class BusinessServiceForm extends HTMLElement {
     }
 
     const showError = (field, message) => {
+      console.log(field, 'field');
       const errorDiv = field.parentElement.querySelector('.error-message');
+      const inputElement = field.parentElement.querySelector('input');
       if (errorDiv) {
+        console.log(errorDiv, 'errorDiv');
+        inputElement.classList.add('has-error');
         errorDiv.textContent = message;
         errorDiv.style.color = 'red';
       }
@@ -875,7 +893,12 @@ class BusinessServiceForm extends HTMLElement {
 
     const clearError = (field) => {
       const errorDiv = field.parentElement.querySelector('.error-message');
-      if (errorDiv) errorDiv.textContent = '';
+      const inputElement = field.parentElement.querySelector('input');
+      if (errorDiv) {
+        inputElement.classList.remove('has-error');
+        errorDiv.textContent = '';
+        errorDiv.removeAttribute('style');
+      }
     };
 
     const cleanInput = (field) => {
@@ -949,6 +972,14 @@ class BusinessServiceForm extends HTMLElement {
       }
     });
 
+    const hasAnyError = ['businessName', 'contactName', 'contactEmail', 'contactPhone'].some((id) =>
+      card.querySelector(`#${id}`)?.classList.contains('has-error')
+    );
+    if (hasAnyError) {
+      saveBtn.disabled = true;
+      addBtn.disabled = true;
+      return;
+    }
     const formValid = nameRequirementMet && contactRequirementMet;
     saveBtn.disabled = !formValid;
     addBtn.disabled = !formValid;
