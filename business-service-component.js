@@ -731,7 +731,6 @@ class BusinessServiceForm extends HTMLElement {
               btnTextElement.textContent = 'SAVE';
               saveBtn.classList.remove('saved-btn');
               saveBtn.disabled = true;
-              //this.removeInformation(card);
             }
           });
 
@@ -961,39 +960,6 @@ class BusinessServiceForm extends HTMLElement {
       if (submitBtn) submitBtn.disabled = true;
     }
   }
-
-  /**
-   * Extracts validation errors from API response
-   * @param {string} jsonString - JSON response string
-   * @returns {Object} Formatted error messages by field
-   */
-
-  extractValidationErrors(json) {
-    const parsed = typeof json === 'string' ? JSON.parse(json) : json;
-    const errorMap = {};
-
-    for (const errorObj of parsed.errors) {
-      for (const fieldName in errorObj) {
-        if (!errorMap[fieldName]) {
-          errorMap[fieldName] = new Set();
-        }
-        for (const message of errorObj[fieldName]) {
-          errorMap[fieldName].add(message);
-        }
-      }
-    }
-
-    // Convert Set back to array and wrap in array of objects
-    const result = [];
-    for (const fieldName in errorMap) {
-      result.push({
-        [fieldName]: Array.from(errorMap[fieldName]),
-      });
-    }
-
-    return result;
-  }
-
   /**
    * Sends collected lead data to the API
    * @param {Array} payload - Business data to send
@@ -1026,7 +992,6 @@ class BusinessServiceForm extends HTMLElement {
         return {
           success: false,
           status: response.status,
-          //error: this.extractValidationErrors(responseData),
           error: responseData.errors,
         };
       }
